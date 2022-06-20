@@ -4,48 +4,27 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls'
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader'
-// import { ViewCubeObject3D } from 'three-js-view-cube'
+// import { ViewCubeObject3D } from 'three-js-view-cube/dist/three-js-view-cube'
 
 import Axios from 'axios'
-import { CubeTextureLoader, Vector3 } from 'three'
 // const vc = new ViewCubeObject3D()
-// const viewCube3D = new ViewCubeObject3D()
 let model: any = null
 const loadingMan = new THREE.LoadingManager()
 const loader = new GLTFLoader(loadingMan)
 const objLoader = new OBJLoader()
 const scene = new THREE.Scene()
-let canvas = document.getElementById('container') as HTMLCanvasElement
 
-const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000)
-const geom1 = new THREE.BoxGeometry()
-const mat1 = new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide })
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
 
-const cube1 = new THREE.Mesh(geom1, mat1)
-cube1.position.set(0, 0, 0)
-let group = new THREE.Group()
-group.attach(cube1)
-let box = new THREE.Box3(new THREE.Vector3(1, 1, 1))
-box.setFromObject(cube1)
-// scene.add(viewCube3D)
-let min = box.min.y
-let max = box.max.y
-let tempAnimData = { min: min, max: max }
-
-console.log(tempAnimData)
-
-scene.add(group)
-camera.position.z = 2
-camera.position.x = 2
-camera.position.y = 2
+camera.position.z = 100
 const dirLight = new THREE.DirectionalLight()
 
 const renderer = new THREE.WebGLRenderer()
 renderer.shadowMap.enabled = true
 
-renderer.setSize(canvas.clientWidth, canvas.clientHeight)
-canvas?.appendChild(renderer.domElement)
-render()
+renderer.setSize(window.innerWidth, window.innerHeight)
+document.body.appendChild(renderer.domElement)
+
 const orbitControls = new OrbitControls(camera, renderer.domElement)
 // controls.addEventListener('change', render)
 const geometry = new THREE.BoxGeometry()
@@ -57,11 +36,22 @@ const material2 = new THREE.MeshBasicMaterial({ color: 0x0000ff })
 dirLight.position.z = 50
 var ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
 scene.add(dirLight)
+loader.load('bridge.glb', (gltf) => {
+    model = gltf
+    scene.add(model.scene)
+    gltf.scene.traverse(function (child) {
+        if ((child as THREE.Mesh).isMesh) {
+            const m = child as THREE.Mesh
+            pickableObjects.push(m)
+            originalMaterials[m.name] = (m as THREE.Mesh).material
+        }
+    })
+})
 
 const transformControls = new TransformControls(camera, renderer.domElement)
-// transformControls.addEventListener('dragging-changed', function (event) {
-//     orbitControls.enabled = !event.value
-// })
+transformControls.addEventListener('dragging-changed', function (event) {
+    orbitControls.enabled = !event.value
+})
 
 window.addEventListener('keydown', function (event) {
     switch (event.key) {
@@ -77,12 +67,40 @@ window.addEventListener('keydown', function (event) {
     }
 })
 
-// const axh1 = new THREE.AxesHelper(1)
-// axh1.position.x = 1
+loader.load('forklift.geo.gltf', (obj) => {
+    obj.scene.position.y = 1
+    const model2 = obj
+    scene.add(model2.scene)
+    // transformControls.attach(model2.scene)
+    // transformControls.setMode('rotate')
+
+    scene.add(transformControls)
+    console.log(obj)
+    obj.scene.traverse(function (child) {
+        if ((child as THREE.Mesh).isMesh) {
+            const m = child as THREE.Mesh
+            pickableObjects.push(m)
+            originalMaterials[m.name] = (m as THREE.Mesh).material
+        }
+    })
+
+    render()
+})
+
+const mtlLoader = new MTLLoader()
+mtlLoader.load('crane.mtl', (mtl) => {
+    objLoader.load('crane.obj', (obj) => {
+        mtl.preload()
+        console.log(mtl)
+    })
+})
+
+const axh1 = new THREE.AxesHelper(1)
+axh1.position.x = 1
 scene.add(ambientLight)
 window.addEventListener('resize', onWindowResize, false)
 function onWindowResize() {
-    camera.aspect = canvas.clientWidth / canvas.clientHeight
+    camera.aspect = window.innerWidth / window.innerHeight
     camera.updateProjectionMatrix()
     renderer.setSize(window.innerWidth, window.innerHeight)
     render()
@@ -123,27 +141,9 @@ function onDocumentMouseMove(event: MouseEvent) {
     })
 }
 
-// scene.add(axh1)
+scene.add(axh1)
 console.log(scene)
-scene.traverse(function (child) {
-    if ((child as THREE.Mesh).isMesh) {
-        console.log(child)
 
-        const m = child as THREE.Mesh
-        pickableObjects.push(m)
-        originalMaterials[m.name] = (m as THREE.Mesh).material
-    }
-})
-type changedObjes = { [key: string]: any }
-const changedObjs: changedObjes = {}
-transformControls.addEventListener('dragging-changed', function (event) {
-    orbitControls.enabled = !event.value
-})
-transformControls.addEventListener('change', (e) => {
-    let name = transformControls.object?.uuid
-    changedObjs[name as string] = transformControls.object
-    console.log('Change Event', changedObjs)
-})
 document.addEventListener('click', onDocumentMouseClick, false)
 function onDocumentMouseClick(event: MouseEvent) {
     raycaster.setFromCamera(
@@ -154,56 +154,30 @@ function onDocumentMouseClick(event: MouseEvent) {
         camera
     )
     intersects = raycaster.intersectObjects(pickableObjects, false)
-    // console.log(intersects[0].object)
 
     if (intersects.length > 0) {
         intersectedObject = intersects[0].object
     } else {
         intersectedObject = null
-        transformControls.detach()
     }
     pickableObjects.forEach((o: THREE.Mesh, i) => {
         if (intersectedObject && intersectedObject.name === o.name) {
-            // console.log(intersectedObject.parent)
             transformControls.attach(intersectedObject.parent as THREE.Mesh)
-            // console.log(transformControls)
-            scene.add(transformControls)
-            render()
         } else {
             pickableObjects[i].material = originalMaterials[o.name]
         }
     })
 }
-let localPlane = new THREE.Plane(new Vector3(0, -1, 0), Math.round(box.min.y * 100) / 100)
-console.log(localPlane.constant)
-let origColor = cube1.material.clone()
 
 function animate() {
     requestAnimationFrame(animate)
-    if (localPlane.constant < box.max.y) {
-        console.log(localPlane.constant)
-        localPlane.constant += 0.01
-        mat1.clippingPlanes = [localPlane]
-        cube1.material.color.set(0x008e00)
-        // cube1.material.wireframe = true
-        cube1.material = mat1
-    } else {
-        const boxL = new THREE.Box3().setFromObject(cube1)
-        localPlane.constant = boxL.max.y
-    }
-    // cube1.rotation.x += 0.01
-    // cube1.rotation.y += 0.01
+
+    // cube.rotation.x += 0.01
+    // cube.rotation.y += 0.01
     orbitControls.update()
 
     render()
 }
-
-let s1 = document.getElementById('keyframe')
-s1?.addEventListener('click', (e) => {
-    console.log('s1 clicked', e)
-})
-
-renderer.localClippingEnabled = true
 
 function render() {
     renderer.render(scene, camera)

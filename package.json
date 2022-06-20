@@ -24,6 +24,8 @@
     "webpack-merge": "^5.8.0"
   },
   "dependencies": {
-    "express": "^4.17.3"
+    "axios": "^0.27.2",
+    "express": "^4.17.3",
+    "three-js-view-cube": "^2.130.1"
   }
 }
