@@ -53,7 +53,6 @@ export default class Raycaster extends EventEmitter {
     }
 
     clicked() {
-        console.log(this.scene)
         this.instance.setFromCamera(this.mouse.cursor, this.camera.instance)
         let intersectedObject
 
@@ -63,7 +62,6 @@ export default class Raycaster extends EventEmitter {
             intersects.forEach((i: any) => {
                 if (i.object.type === 'Mesh') {
                     intersectedObject = i.object
-                    console.log(this.pickableObjects)
                     if (
                         this.pickableObjects.indexOf(intersectedObject) > -1 &&
                         this.selected.length === 0

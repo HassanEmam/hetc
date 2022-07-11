@@ -31,8 +31,10 @@ export default class World extends EventEmitter {
         this.bb = new THREE.Box3()
         this.loadGLTF('./bridge.glb')
         this.animationData = new AnimationData(
+            'cba163f8-0425-41a1-9a0b-b47961ea1ef0',
             'ca5527d9-209f-4ae0-ae84-57d8419e1db2',
-            '66428a2f-bdde-4773-aa64-8545bc86d91a'
+            '66428a2f-bdde-4773-aa64-8545bc86d91a',
+            this.experience
         )
 
         console.log(mymesh)
@@ -52,7 +54,16 @@ export default class World extends EventEmitter {
             (gltf: any) => {
                 this.bb.setFromObject(gltf.scene)
                 this.scene.add(gltf.scene)
-                console.log('GLTF Loaded', gltf.scene)
+                // this.experience.raycaster.pickableObjects.push(...gltf.scene.children)
+                for (let o in gltf.scene.children) {
+                    let obj = gltf.scene.children[o]
+                    if (obj instanceof THREE.Mesh) {
+                        this.experience.raycaster.pickableObjects.push(obj)
+                        this.experience.raycaster.originalMaterials[obj.uuid] = obj.material
+                    }
+                }
+                this.experience.update()
+                console.log('GLTF Loaded', this.experience.raycaster.pickableObjects)
                 this.trigger('modelLoaded', gltf.scene)
                 this.positionGrid(this.bb)
             },

@@ -23,4 +23,16 @@ export default class ApiService {
             headers: this.getAuthHeader(),
         })
     }
+
+    getDetailedObjectActivities(model_id: string) {
+        return axios.get(this.baseUrl + 'objectactivity/modeld/' + model_id, {
+            headers: this.getAuthHeader(),
+        })
+    }
+
+    getAppearanceProfiles(project_id: string) {
+        return axios.get(this.baseUrl + 'appearanceprofile/p/' + project_id, {
+            headers: this.getAuthHeader(),
+        })
+    }
 }

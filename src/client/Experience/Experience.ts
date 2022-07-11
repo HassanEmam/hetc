@@ -60,8 +60,7 @@ export default class Experience {
             this.update()
         })
 
-        this.mouse.on('clicked', (event: MouseEvent) => {
-            console.log('clicked', event)
+        this.mouse.on('clicked', (event: any) => {
             this.clickEvent()
         })
 
