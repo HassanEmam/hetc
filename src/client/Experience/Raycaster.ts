@@ -1,0 +1,115 @@
+import * as THREE from 'three'
+import Camera from './Camera'
+import Experience from './Experience'
+
+import { EventEmitter } from './Utils/EventEmitter'
+import Mouse from './Utils/Mouse'
+import World from './World/World'
+
+// type originalMaterials = { [key: string]: THREE.Material }
+export default class Raycaster extends EventEmitter {
+    // origMaterial: originalMaterials[] = []
+
+    experience: Experience
+    camera: Camera
+    pickableObjects: THREE.Mesh[]
+    selected: string[]
+    originalMaterials: { [key: string]: THREE.Material }
+    highlightedMaterial: THREE.MeshBasicMaterial
+    world: World
+    mouse: Mouse
+    instance: any
+    scene: THREE.Scene
+
+    constructor(experience: Experience) {
+        super()
+        this.pickableObjects = []
+        this.selected = []
+        this.originalMaterials = {}
+        this.highlightedMaterial = new THREE.MeshBasicMaterial({
+            wireframe: true,
+            color: 0x00ff00,
+        })
+        this.experience = experience
+        this.camera = experience.camera
+        this.scene = experience.scene
+        this.world = experience.world
+        this.mouse = experience.mouse
+        this.setInstance()
+    }
+
+    setInstance() {
+        this.instance = new THREE.Raycaster()
+        this.instance.setFromCamera(this.mouse.cursor, this.camera.instance)
+        const group = this.scene.getObjectByName('world') as THREE.Group
+        for (let o in group.children) {
+            let obj = group.children[o]
+
+            if (obj instanceof THREE.Mesh) {
+                this.pickableObjects.push(obj)
+                this.originalMaterials[obj.uuid] = obj.material
+            }
+        }
+    }
+
+    clicked() {
+        console.log(this.scene)
+        this.instance.setFromCamera(this.mouse.cursor, this.camera.instance)
+        let intersectedObject
+
+        this.selected = []
+        let intersects = this.instance.intersectObjects(this.pickableObjects)
+        if (intersects.length > 0) {
+            intersects.forEach((i: any) => {
+                if (i.object.type === 'Mesh') {
+                    intersectedObject = i.object
+                    console.log(this.pickableObjects)
+                    if (
+                        this.pickableObjects.indexOf(intersectedObject) > -1 &&
+                        this.selected.length === 0
+                    ) {
+                        this.selected.push(i.object.uuid)
+                        this.trigger('objectSelected', [intersectedObject])
+                    }
+                }
+            })
+        } else {
+            intersectedObject = null
+            this.trigger('ObjectDeselected')
+        }
+        this.update(intersectedObject)
+    }
+
+    move() {
+        this.instance.setFromCamera(this.mouse.cursor, this.camera.instance)
+        let intersectedObject
+
+        let intersects = this.instance.intersectObjects(this.experience.scene.children)
+        if (intersects.length > 0) {
+            intersects.forEach((i: any) => {
+                if (i.object.type === 'Mesh') {
+                    intersectedObject = i.object
+                }
+            })
+        } else {
+            intersectedObject = null
+        }
+        this.update(intersectedObject)
+    }
+
+    update(intersectedObject: any) {
+        this.pickableObjects.forEach((o, i) => {
+            if (
+                intersectedObject !== null &&
+                intersectedObject !== undefined &&
+                intersectedObject instanceof THREE.Mesh
+            ) {
+                if (intersectedObject.uuid === o.uuid) {
+                    this.pickableObjects[i].material = this.highlightedMaterial
+                }
+            } else if (this.pickableObjects[i].uuid !== this.selected[0]) {
+                this.pickableObjects[i].material = this.originalMaterials[o.uuid]
+            }
+        })
+    }
+}
