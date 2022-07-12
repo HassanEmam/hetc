@@ -30,7 +30,7 @@ export default class Experience {
         // Singleton
 
         // Global access
-        // window.experience = this
+        ;(<any>window).experience = this
 
         // Options
         this.container = _container
@@ -44,9 +44,10 @@ export default class Experience {
 
         this.camera = new Camera(this)
         // this.resources = new Resources()
-        this.world = new World(this)
         this.mouse = new Mouse(this)
         this.raycaster = new Raycaster(this)
+        this.world = new World(this)
+
         this.controls = new Controls(this)
         this.renderer.instance.render(this.scene, this.camera.instance)
 

@@ -41,9 +41,9 @@ export default class Raycaster extends EventEmitter {
     setInstance() {
         this.instance = new THREE.Raycaster()
         this.instance.setFromCamera(this.mouse.cursor, this.camera.instance)
-        const group = this.scene.getObjectByName('world') as THREE.Group
-        for (let o in group.children) {
-            let obj = group.children[o]
+
+        for (let o in this.scene.children) {
+            let obj = this.scene.children[o]
 
             if (obj instanceof THREE.Mesh) {
                 this.pickableObjects.push(obj)
@@ -82,11 +82,18 @@ export default class Raycaster extends EventEmitter {
         this.instance.setFromCamera(this.mouse.cursor, this.camera.instance)
         let intersectedObject
 
-        let intersects = this.instance.intersectObjects(this.experience.scene.children)
+        let intersects = this.instance.intersectObjects(this.pickableObjects)
         if (intersects.length > 0) {
             intersects.forEach((i: any) => {
                 if (i.object.type === 'Mesh') {
                     intersectedObject = i.object
+                    if (
+                        this.pickableObjects.indexOf(intersectedObject) > -1 &&
+                        this.selected.length === 0
+                    ) {
+                        this.selected.push(i.object.uuid)
+                        // this.trigger('objectSelected', [intersectedObject])
+                    }
                 }
             })
         } else {
@@ -104,6 +111,8 @@ export default class Raycaster extends EventEmitter {
             ) {
                 if (intersectedObject.uuid === o.uuid) {
                     this.pickableObjects[i].material = this.highlightedMaterial
+                } else {
+                    this.pickableObjects[i].material = this.originalMaterials[o.uuid]
                 }
             } else if (this.pickableObjects[i].uuid !== this.selected[0]) {
                 this.pickableObjects[i].material = this.originalMaterials[o.uuid]
