@@ -24,12 +24,19 @@ export default class AnimationData {
 
     constructor(project_id: string, model_id: string, schedule_id: string, experience: Experience) {
         console.log(schedule_id, model_id)
-        this.getDetailedObjectActivity(model_id)
+
         this.experience = experience
         this.scene = experience.scene
+        this.init(model_id)
         // this.getObjectActivities(model_id)
         // this.getActivities(schedule_id)
         // this.getAppearanceProfiles(project_id)
+    }
+
+    async init(model_id: string) {
+        await this.getDetailedObjectActivity(model_id)
+
+        this.startAnimation()
     }
 
     async getActivities(schedule_id: string) {
@@ -42,12 +49,14 @@ export default class AnimationData {
     }
 
     async getDetailedObjectActivity(model_id: string) {
-        await this.apiService.getDetailedObjectActivities(model_id).then((data) => {
-            this.animDataType = data.data
-            this.animData = this.animDataType.map((obj) => {
-                return new AnimData(obj, this.experience)
+        if (model_id) {
+            await this.apiService.getDetailedObjectActivities(model_id).then((data) => {
+                this.animDataType = data.data
+                this.animData = this.animDataType.map((obj) => {
+                    return new AnimData(obj, this.experience)
+                })
             })
-        })
+        }
         this.animData = this.animData.sort((a, b) => {
             return a.activity.start.getTime() - b.activity.start.getTime()
         })
@@ -55,7 +64,7 @@ export default class AnimationData {
         this.startAnimation()
     }
 
-    startAnimation() {
+    async startAnimation() {
         this.startTime = this.animData[0].activity.start
         const maxDat = this.animData.reduce((a, b) => {
             return new Date(a.activity.finish) > new Date(b.activity.finish) ? a : b
@@ -66,17 +75,21 @@ export default class AnimationData {
         this.animationLoop()
     }
 
-    animationLoop() {
+    async animationLoop() {
         while (this.focusTime <= this.finishTime) {
+            // await setTimeout(() => {
+            //     console.log('Delay!')
+            // }, 1000)
             for (let ad of this.animData) {
                 if (ad.activity.start <= this.focusTime && this.focusTime <= ad.activity.finish) {
-                    console.log('in progress', ad.getStatus(this.focusTime))
+                    await ad.getStatus(this.focusTime)
                 } else if (this.focusTime > ad.activity.finish) {
                     // console.log('Finished', this.focusTime, ad.appearanceprofile.during)
                 } else if (this.focusTime < ad.activity.start) {
                     // console.log('Not started', this.focusTime, ad.duration, ad.activity)
                 }
             }
+
             this.focusTime.setDate(this.focusTime.getDate() + 1)
         }
     }

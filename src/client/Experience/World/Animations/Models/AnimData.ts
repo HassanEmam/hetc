@@ -48,7 +48,7 @@ export class AnimData {
     lpConst: number = 0
     minLp: number = 0
     maxLp: number = 0
-    clippingPlane: THREE.Plane
+    localPlane: THREE.Plane
 
     constructor(data: iAnimData, experience: Experience) {
         this.msInDay = 24 * 60 * 60 * 1000
@@ -60,7 +60,8 @@ export class AnimData {
         this.activity.finish = new Date(data.activity.finish)
         this.appearanceprofile = data.appearanceprofile
         this.element = data.element
-        this.object = this.scene.getObjectByName(data.element) as THREE.Mesh
+        this.object = this.scene.getObjectByName(this.element) as THREE.Mesh
+        console.log(this, this.object, this.element)
         const bb = this.object.geometry.boundingBox as THREE.Box3
         if (this.appearanceprofile.x === 1) {
             this.minLp = bb.min.x - 0.01
@@ -69,7 +70,7 @@ export class AnimData {
         } else if (this.appearanceprofile.z === 1) {
             this.minLp = bb.min.z - 0.01
         }
-        this.clippingPlane = new THREE.Plane(
+        this.localPlane = new THREE.Plane(
             new THREE.Vector3(
                 this.appearanceprofile.x,
                 this.appearanceprofile.y,
@@ -77,7 +78,7 @@ export class AnimData {
             ),
             this.minLp
         )
-        ;(this.object.material as THREE.MeshStandardMaterial).clippingPlanes = [this.clippingPlane]
+        // ;(this.object.material as THREE.MeshStandardMaterial).clippingPlanes = [this.localPlane]
 
         this.duration =
             (data.activity.finish.getTime() - data.activity.start.getTime()) / this.msInDay
@@ -100,9 +101,14 @@ export class AnimData {
             const elapsed = (focusTime.getTime() - this.activity.start.getTime()) / this.msInDay
             let progress = elapsed / this.duration
             let lp = this.minLp + progress * this.lpConst
-            console.log(progress, lp, this.minLp, this.maxLp, this.lpConst, bb)
-            this.clippingPlane.constant = lp
-            ;(this.object.material as THREE.MeshBasicMaterial).clippingPlanes = [this.clippingPlane]
+            this.localPlane.constant = Math.round(lp * 100) / 100
+            const material = this.object.material as THREE.MeshBasicMaterial
+            material.clippingPlanes = [this.localPlane]
+            console.log(
+                progress,
+
+                this
+            )
             return lp
         }
         if (focusTime < this.activity.start) {
