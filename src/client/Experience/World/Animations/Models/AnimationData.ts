@@ -27,9 +27,6 @@ export default class AnimationData {
         this.getDetailedObjectActivity(model_id)
         this.experience = experience
         this.scene = experience.scene
-        // this.getObjectActivities(model_id)
-        // this.getActivities(schedule_id)
-        // this.getAppearanceProfiles(project_id)
     }
 
     async getActivities(schedule_id: string) {
@@ -51,8 +48,7 @@ export default class AnimationData {
         this.animData = this.animData.sort((a, b) => {
             return a.activity.start.getTime() - b.activity.start.getTime()
         })
-        console.log('AnimData', this.animData)
-        this.startAnimation()
+        // this.startAnimation()
     }
 
     startAnimation() {
@@ -62,23 +58,34 @@ export default class AnimationData {
         })
         this.finishTime = maxDat.activity.finish
 
-        this.focusTime = this.startTime
+        this.focusTime = new Date(this.startTime)
         this.animationLoop()
     }
 
-    animationLoop() {
-        while (this.focusTime <= this.finishTime) {
+    async animationLoop() {
+        let i = 0
+        while (this.focusTime < this.finishTime) {
             for (let ad of this.animData) {
                 if (ad.activity.start <= this.focusTime && this.focusTime <= ad.activity.finish) {
-                    console.log('in progress', ad.getStatus(this.focusTime))
+                    ad.getStatus(this.focusTime)
                 } else if (this.focusTime > ad.activity.finish) {
+                    ad.getStatus(this.focusTime)
+
                     // console.log('Finished', this.focusTime, ad.appearanceprofile.during)
                 } else if (this.focusTime < ad.activity.start) {
+                    ad.getStatus(this.focusTime)
+
                     // console.log('Not started', this.focusTime, ad.duration, ad.activity)
                 }
             }
             this.focusTime.setDate(this.focusTime.getDate() + 1)
+            await this.delay(100)
         }
+        this.experience.raycaster.isAnim = false
+    }
+
+    delay(ms: number) {
+        return new Promise((resolve) => setTimeout(resolve, ms))
     }
 
     async getObjectActivities(model_id: string) {

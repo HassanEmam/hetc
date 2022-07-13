@@ -20,6 +20,7 @@ export default class Raycaster extends EventEmitter {
     mouse: Mouse
     instance: any
     scene: THREE.Scene
+    isAnim: boolean = false
 
     constructor(experience: Experience) {
         super()
@@ -79,35 +80,61 @@ export default class Raycaster extends EventEmitter {
     }
 
     move() {
-        this.instance.setFromCamera(this.mouse.cursor, this.camera.instance)
-        let intersectedObject
+        if (!this.isAnim) {
+            this.instance.setFromCamera(this.mouse.cursor, this.camera.instance)
+            let intersectedObject
 
-        let intersects = this.instance.intersectObjects(this.experience.scene.children)
-        if (intersects.length > 0) {
-            intersects.forEach((i: any) => {
-                if (i.object.type === 'Mesh') {
-                    intersectedObject = i.object
-                }
-            })
-        } else {
-            intersectedObject = null
+            let intersects = this.instance.intersectObjects(this.pickableObjects)
+            if (intersects.length > 0) {
+                intersects.forEach((i: any) => {
+                    if (i.object.type === 'Mesh') {
+                        intersectedObject = i.object
+                        if (
+                            this.pickableObjects.indexOf(intersectedObject) > -1 &&
+                            this.selected.length === 0
+                        ) {
+                            this.selected.push(i.object.uuid)
+                            // this.trigger('objectSelected', [intersectedObject])
+                        }
+                    }
+                })
+            } else {
+                intersectedObject = null
+            }
+            this.update(intersectedObject)
         }
-        this.update(intersectedObject)
+    }
+
+    refresh() {
+        const group = this.scene.getObjectByName('world') as THREE.Group
+
+        for (let o in group.children) {
+            let obj = group.children[o]
+
+            if (obj instanceof THREE.Mesh) {
+                this.pickableObjects.push(obj)
+                this.originalMaterials[obj.uuid] = obj.material
+            }
+        }
     }
 
     update(intersectedObject: any) {
-        this.pickableObjects.forEach((o, i) => {
-            if (
-                intersectedObject !== null &&
-                intersectedObject !== undefined &&
-                intersectedObject instanceof THREE.Mesh
-            ) {
-                if (intersectedObject.uuid === o.uuid) {
-                    this.pickableObjects[i].material = this.highlightedMaterial
+        if (!this.isAnim) {
+            this.pickableObjects.forEach((o, i) => {
+                if (
+                    intersectedObject !== null &&
+                    intersectedObject !== undefined &&
+                    intersectedObject instanceof THREE.Mesh
+                ) {
+                    if (intersectedObject.uuid === o.uuid) {
+                        this.pickableObjects[i].material = this.highlightedMaterial
+                    } else {
+                        this.pickableObjects[i].material = this.originalMaterials[o.uuid]
+                    }
+                } else if (this.pickableObjects[i].uuid !== this.selected[0]) {
+                    this.pickableObjects[i].material = this.originalMaterials[o.uuid]
                 }
-            } else if (this.pickableObjects[i].uuid !== this.selected[0]) {
-                this.pickableObjects[i].material = this.originalMaterials[o.uuid]
-            }
-        })
+            })
+        }
     }
 }

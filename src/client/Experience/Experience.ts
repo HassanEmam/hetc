@@ -30,8 +30,8 @@ export default class Experience {
         // Singleton
 
         // Global access
-        // window.experience = this
-
+        ;(<any>window).experience = this
+        ;(<any>window).THREE = THREE
         // Options
         this.container = _container
 
@@ -91,8 +91,9 @@ export default class Experience {
 
         this.camera.update()
         // this.world.update();
-        this.raycaster.move()
-        this.renderer.update()
+        this.raycaster.refresh()
+        // this.raycaster.move()
+        // this.renderer.update()
         this.controls.update()
     }
 

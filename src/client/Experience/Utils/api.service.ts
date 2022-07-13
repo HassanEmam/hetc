@@ -3,7 +3,7 @@ import axios from 'axios'
 export default class ApiService {
     baseUrl = 'https://bim.constology.com/api/'
     auth =
-        'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2NTc2NDQ4NDksImlhdCI6MTY1NzU1ODQ0NCwic3ViIjoyfQ.UuPT_QhD2g5eBHvWe0MR4sQ7nenCZV8k-u9FzZdOW80'
+        'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2NTc4MTgzNzEsImlhdCI6MTY1NzczMTk2Niwic3ViIjoyfQ.jDKz3yTuuLj8ZiShOlz-sGOFpESxrXscqKDYTqKL9mE'
 
     getAuthHeader() {
         return {
