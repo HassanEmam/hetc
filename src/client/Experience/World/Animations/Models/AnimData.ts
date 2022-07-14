@@ -132,11 +132,13 @@ export class AnimData {
         this.experience.raycaster.isAnim = true
 
         if (this.object !== undefined) {
+            this.object.visible = this.appearanceprofile.during
             const cplanes = []
             this.object.geometry.computeBoundingBox()
             const bb = this.object.geometry.boundingBox as THREE.Box3
 
             this.lpConst = this.maxLp - this.minLp
+            console.log(this.object.name, focusTime, this.activity.start, this.activity.finish)
             if (this.activity.start < focusTime && focusTime < this.activity.finish) {
                 // this.clonedMateral = new THREE.MeshBasicMaterial({ color: 0x00ff00 })
                 const elapsed = (focusTime.getTime() - this.activity.start.getTime()) / this.msInDay
@@ -150,8 +152,12 @@ export class AnimData {
             } else if (focusTime < this.activity.start) {
                 this.clonedMateral.clippingPlanes[0].constant = this.minLp
                 this.object.material = this.clonedMateral
+                this.object.visible = this.appearanceprofile.before
                 return 0
-            } else if (focusTime > this.activity.finish) {
+            } else if (focusTime >= this.activity.finish) {
+                this.object.visible = this.appearanceprofile.after
+                this.object.material = this.experience.raycaster.originalMaterials[this.object.uuid]
+                console.log(this.experience.raycaster.originalMaterials[this.object.uuid])
                 return 1
             }
             this.experience.update()
