@@ -4,7 +4,6 @@ import * as THREE from 'three'
 import Experience from './Experience'
 import Camera from './Camera'
 import Renderer from './Renderer'
-import { toASCII } from 'punycode'
 
 export default class Controls {
     experience: Experience
@@ -63,15 +62,20 @@ export default class Controls {
     objectSelected(object: THREE.Mesh) {
         console.log('Controls.ObjectSelected', object)
         console.log(this.experience.scene)
-        if (object instanceof THREE.Mesh) {
+        if (object instanceof THREE.Mesh && object !== null && object !== undefined) {
             // for (let ob of this.scene.children) {
             //     if (ob instanceof TransformControls) {
             //         this.scene.remove(ob)
             //     }
             // }
             this.transformControls.detach()
+            object.updateMatrixWorld()
+            object.geometry.computeBoundingBox()
+
+            // object.geometry.center()
+            // this.transformControls.position.set(centroid)
             this.transformControls.attach(object)
-            // this.transformControls.position.set() ((this.getCenterPoint(object))
+
             this.transformControls.setSpace('local')
         }
         this.transformControls.addEventListener('dragging-changed', (event: any) => {

@@ -56,6 +56,7 @@ export default class AnimationData {
         const maxDat = this.animData.reduce((a, b) => {
             return new Date(a.activity.finish) > new Date(b.activity.finish) ? a : b
         })
+
         this.finishTime = maxDat.activity.finish
 
         this.focusTime = new Date(this.startTime)
@@ -64,7 +65,7 @@ export default class AnimationData {
 
     async animationLoop() {
         let i = 0
-        while (this.focusTime < this.finishTime) {
+        while (this.focusTime <= this.finishTime) {
             for (let ad of this.animData) {
                 if (ad.activity.start <= this.focusTime && this.focusTime <= ad.activity.finish) {
                     ad.getStatus(this.focusTime)
